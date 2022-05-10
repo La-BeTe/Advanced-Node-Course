@@ -16,14 +16,9 @@ module.exports = app => {
 	});
 
 	app.get('/api/blogs', requireLogin, async (req, res) => {
-		const logKey = `GET-BLOG-${req?.user?.id}`;
+		const logKey = `GET-BLOG-${req.user.id}`;
 		try{
-			const key = `Blog${req.user.id}`;
-			let blogs = await cache.get(key);
-			if(!blogs){
-				blogs = await Blog.find({ _user: req.user.id });
-				await cache.set(key, blogs);
-			}
+			const blogs = await Blog.find({ _user: req.user.id }).cache(req.user.id);
 			res.json(blogs);
 		}catch(e){
 			res.status(400).json(e.message);
@@ -32,7 +27,7 @@ module.exports = app => {
 	});
 
 	app.post('/api/blogs', requireLogin, async (req, res) => {
-		const logKey = `CREATE-BLOG-${req?.user?.id}`;
+		const logKey = `CREATE-BLOG-${req.user.id}`;
 		try{
 			logger.info(logKey, req.body);
 			const { title, content } = req.body;
@@ -41,12 +36,7 @@ module.exports = app => {
 				content,
 				_user: req.user.id
 			});
-			const key = `Blog${req.user.id}`;
-			const cachedBlogs = await cache.get(key);
-			if(Array.isArray(cachedBlogs)){
-				cachedBlogs.push(blog);
-				await cache.set(key, cachedBlogs);
-			}
+			cache.clear(req.user.id);
 			res.json(blog);
 		}catch(e){
 			res.status(400).json(e.message);
