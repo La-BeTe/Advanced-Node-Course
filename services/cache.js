@@ -3,7 +3,7 @@ const redis = require("redis");
 class Cache{
 
     constructor(){
-        this.ttl = 0.1;
+        this.ttl = 90;
         this.client = redis.createClient();
         this.connectToClient();
     }
@@ -19,7 +19,7 @@ class Cache{
         if(result){
             result = JSON.parse(result);
             if(result.created && this.ttl && ((Date.now() - result.created) > (this.ttl * 60 * 1000))){
-                this.clear(...keys);
+                await this.clear(...keys);
                 result = null;
             }else{
                 result = result.value;
