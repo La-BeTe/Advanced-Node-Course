@@ -33,6 +33,11 @@ if (['production'].includes(process.env.NODE_ENV)) {
   app.get('*', (req, res) => {
     res.sendFile(path.resolve('client', 'build', 'index.html'));
   });
+}else{
+  app.get('*', (req, res) => {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.redirect(`${frontendUrl}${req.originalUrl}`);
+  });
 }
 
 const PORT = process.env.PORT || 5000;
