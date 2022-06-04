@@ -1,51 +1,18 @@
-const puppeteer = require("puppeteer");
-let browser, page;
+const initPage = require("./helpers/page");
 
-async function logIn(){
-    const sessionStr = JSON.stringify({
-        passport: {
-            user: process.env.TEST_USER_ID
-        }
-    })
-    const base64SessionStr = Buffer.from(sessionStr).toString("base64");
-    const Keygrip = require("keygrip");
-    const keygripInstance = new Keygrip(String(process.env.COOKIE_KEY).split(","));
-    const signature = keygripInstance.sign(`session=${base64SessionStr}`);
-    await page.setCookie(
-        {
-            name: "session",
-            value: base64SessionStr
-        },
-        {
-            name: "session.sig",
-            value: signature
-        }
-    )
-    await page.reload();
-    await page.waitForSelector(".right a");
-}
-
-beforeAll(async ()=>{
-    browser = await puppeteer.launch({
-        headless: false
-    });
-})
+let page;
 
 beforeEach(async ()=>{
-    page = await browser.newPage();
+    page = await initPage();
     await page.goto("http://localhost:3000");
 })
 
 afterEach(async ()=>{
-    await page.close();
-})
-
-afterAll(async ()=>{
-    await browser.close();
+    await page.browser_close();
 })
 
 test("the brand logo should contain the correct text", async ()=>{
-    const brandLogoText = await page.$eval("a.brand-logo", el=> el.innerText);
+    const brandLogoText = await page.getInnerText("a.brand-logo");
     expect(brandLogoText).toEqual("Blogster");
 })
 
@@ -56,7 +23,7 @@ test("should redirect to Google on clicking login", async ()=>{
 })
 
 test("should show Logout button when logged in", async ()=>{
-    await logIn();
-    const logoutText = await page.$eval("a[href='/auth/logout']", el=> el.innerText);
+    await page.login();
+    const logoutText = await page.getInnerText("a[href='/auth/logout']");
     expect(logoutText).toEqual("Logout");
 })
